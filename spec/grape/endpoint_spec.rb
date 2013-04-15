@@ -562,4 +562,32 @@ describe Grape::Endpoint do
     end
   end
 
+  describe "nested APIs" do
+    class DicaprioAPI < Grape::API
+      get 'even_deeper' do
+        env['before_test']
+      end
+    end
+
+    class APIV1 < Grape::API
+      mount DicaprioAPI
+    end
+
+    class BaseAPI < Grape::API
+      before do
+        raise "from before filter"
+        env['before_test'] = "OK"
+      end
+      mount APIV1
+    end
+
+    def app; BaseAPI; end
+
+    describe 'before filters' do
+      it 'runs the before filter if set on a deeply nested Grape API' do
+        get '/even_deeper'
+        last_response.body.should == "OK"
+      end
+    end
+  end
 end
